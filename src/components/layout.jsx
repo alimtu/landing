@@ -3,90 +3,99 @@
 import { UserOutlined, CalendarOutlined, TeamOutlined, SettingOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import { useAuth } from '../lib/hooks/useAuth';
-import { Layout, Menu, Avatar, Dropdown } from 'antd';
-import { useSession } from 'next-auth/react';
+import { Layout, Menu, Avatar, Dropdown, Button } from 'antd';
+import useAuthStore from '../stores/authStore';
+import Image from 'next/image';
 const { Header, Sider, Content } = Layout;
 
 const MyLayout = ({ children }) => {
   const { logout } = useAuth();
-  const { data: session } = useSession();
+  const { user } = useAuthStore();
 
   const userMenuItems = [
     {
       key: '1',
-      label: 'Profile',
-    },
-    {
-      key: '2',
-      label: 'Settings',
-    },
-    {
-      key: '3',
-      label: 'Logout',
+      label: 'خروج',
       onClick: () => logout(),
     },
   ];
 
   return (
-    <Layout style={{ minHeight: '100vh', direction: 'rtl' }}>
-      <Sider
-        theme="light"
-        style={{
-          overflow: 'auto',
-          height: '100vh',
-          position: 'fixed',
-          right: 0,
-          top: 0,
-          bottom: 0,
-        }}
-      >
-        <div className="p-4">
-          <h1 className="text-xl font-bold text-blue-600">Clinic App</h1>
+    <Layout style={{ minHeight: '100vh', direction: 'rtl' }} className="relative">
+      <Header className="bg-white flex items-center justify-between px-4 lg:px-6 h-18 lg:h-16 fixed top-0 z-10 w-full">
+        <div className="flex items-center">
+          <Image
+            src="/images/drnext-horizontal-logo.svg"
+            alt="drnext logo"
+            width={120}
+            height={32}
+            className="hidden lg:block"
+          />
+          <Image
+            src="/images/drnext-horizontal-logo.svg"
+            alt="drnext logo"
+            width={90}
+            height={24}
+            className="block lg:hidden"
+          />
         </div>
-        <Menu
-          mode="inline"
-          defaultSelectedKeys={['1']}
-          items={[
-            {
-              key: '1',
-              icon: <CalendarOutlined />,
-              label: <Link href="/">Dashboard</Link>,
-            },
-            {
-              key: '2',
-              icon: <TeamOutlined />,
-              label: <Link href="/patients">Patients</Link>,
-            },
-            {
-              key: '3',
-              icon: <SettingOutlined />,
-              label: <Link href="/settings">Settings</Link>,
-            },
-          ]}
-        />
-      </Sider>
-      <Layout style={{ marginRight: 200 }}>
-        <Header
-          style={{
-            padding: '0 24px',
-            background: '#fff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-start',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-          }}
+
+        <nav
+          className="hidden lg:flex"
+          style={{ flex: 1, display: 'flex', justifyContent: 'center', gap: 40 }}
         >
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomLeft">
-            <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Avatar icon={<UserOutlined />} />
-              <span>{session?.user?.firstName}</span>
-            </div>
-          </Dropdown>
-        </Header>
-        <Content style={{ margin: '24px 16px', padding: 24, background: '#fff', minHeight: 280 }}>
-          {children}
-        </Content>
-      </Layout>
+          <Link href="#" style={{ color: '#222', fontWeight: 500 }}>
+            تخصص‌ها
+          </Link>
+          <Link href="#" style={{ color: '#222', fontWeight: 500 }}>
+            نوبت دهی
+          </Link>
+          <Link href="#" style={{ color: '#222', fontWeight: 500 }}>
+            آزمایش در محل
+          </Link>
+          <Link href="#" style={{ color: '#222', fontWeight: 500 }}>
+            فروشگاه
+          </Link>
+          <Link href="#" style={{ color: '#222', fontWeight: 500 }}>
+            مجله سلامت
+          </Link>
+          <Link href="#" style={{ color: '#222', fontWeight: 500 }}>
+            دستیار هوشمند تشخیص
+          </Link>
+        </nav>
+
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          {user ? (
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomLeft">
+              <div className="cursor-pointer flex items-center gap-2">
+                <Avatar icon={<UserOutlined />} className="w-6 h-6" />
+                <span className="font-bold text-xs lg:text-sm">
+                  {user.firstName} {user.lastName}
+                </span>
+              </div>
+            </Dropdown>
+          ) : (
+            <Link href="#">
+              <Button
+                type="default"
+                style={{
+                  borderRadius: 8,
+                  padding: '0 24px',
+                  fontWeight: 500,
+                  color: '#244A9A',
+                  borderColor: '#e0e6ed',
+                  height: 40,
+                }}
+              >
+                ورود بیمار
+              </Button>
+            </Link>
+          )}
+        </div>
+      </Header>
+      <Content style={{ background: '#fff', minHeight: 280 }} className="mt-18 lg:mt-16">
+        {children}
+      </Content>
     </Layout>
   );
 };

@@ -3,9 +3,8 @@ import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { ConfigProvider, App } from 'antd';
 import faIR from 'antd/es/locale/fa_IR';
 import { antdTheme } from '../styles/antd-theme';
-import { Providers } from './providers';
-
 import AntdCompat from './compat-client';
+import React, { Suspense } from 'react';
 
 export const metadata = {
   title: 'Clinic App',
@@ -20,7 +19,7 @@ export default function RootLayout({ children }) {
         <ConfigProvider locale={faIR} direction="rtl" theme={antdTheme}>
           <App>
             <AntdRegistry>
-              <Providers>{children}</Providers>
+              <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
             </AntdRegistry>
           </App>
         </ConfigProvider>

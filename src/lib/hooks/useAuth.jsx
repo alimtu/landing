@@ -1,38 +1,46 @@
 import { useRouter } from 'next/navigation';
-import { signIn, signOut } from 'next-auth/react';
 import { postFetcher } from '../../lib/swr/fetcher';
+import useAuthStore from '../../stores/authStore';
 
 export const useAuth = () => {
   const router = useRouter();
+  const { setToken, setUser, logout: storeLogout } = useAuthStore();
 
-  const requestOtp = async mobile => {
+  const SEND_VERIFICATION_TOKEN = (resend = false) =>
+    `/v1/patients/auth/${resend ? 'resend' : 'send'}-verification-token`;
+
+  const CHECK_VERIFICATION_TOKEN = () => `/v1/patients/auth/check-verification-token`;
+
+  const requestOtp = async (mobile, isResend = false) => {
     try {
-      const response = await postFetcher('/v1/auth/request-otp', { mobile });
-
-      console.log('responseresponseresponse', response);
-
-      return response;
+      const response = await postFetcher(SEND_VERIFICATION_TOKEN(isResend), {
+        mobile,
+        source: 'besina',
+      });
+      if (response?.error) {
+        throw new Error(response.error);
+      }
+      let { data } = response;
+      return data;
     } catch (error) {
       throw error;
     }
   };
 
-  const verifyOtp = async (mobile, otp) => {
-    console.log('Verify ....');
+  const verifyOtp = async (mobile, otp, userStatus) => {
+    console.log('userStatususerStatus', userStatus);
 
     try {
-      const result = await signIn('credentials', {
+      const response = await postFetcher(CHECK_VERIFICATION_TOKEN(), {
         mobile,
-        otp,
-        redirect: true,
-        callbackUrl: '/dashboard',
+        token: otp,
+        unique_token: userStatus.unique_token,
       });
-
-      if (result?.error) {
-        throw new Error(result.error);
+      if (response?.error) {
+        throw new Error(response.error);
       }
-
-      return result;
+      let { data } = response;
+      return data;
     } catch (error) {
       throw error;
     }
@@ -40,24 +48,25 @@ export const useAuth = () => {
 
   const loginWithPassword = async (mobile, password) => {
     try {
-      const result = await signIn('credentials', {
+      const response = await postFetcher('/v1/patients/auth/login', {
         mobile,
         password,
-        redirect: false,
       });
-
-      if (result?.error) {
-        throw new Error(result.error);
+      if (response?.error) {
+        throw new Error(response.error);
       }
-
-      return result;
+      const { token, user } = response.data;
+      setToken(token);
+      setUser(user);
+      return { ok: true };
     } catch (error) {
       throw error;
     }
   };
 
   const logout = () => {
-    signOut({ callbackUrl: '/login' });
+    storeLogout();
+    router.push('/login');
   };
 
   return {

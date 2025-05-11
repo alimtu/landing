@@ -5,7 +5,7 @@ module.exports = {
   },
   isDebug: process.env.IS_DEBUG || false,
   api: {
-    baseURL: process.env.API_BASE_URL || 'https://stageclinic-server.drnext.ir/',
+    baseURL: process.env.API_BASE_URL || 'https://stagecyclops.drnext.ir/',
     soketiUrl: process.env.NUXT_ENV_SOKETI_PUSHER_HOST,
     soketiPort: process.env.NUXT_ENV_SOKETI_PUSHER_PORT || 80,
     soketiAppKey: process.env.NUXT_ENV_SOKETI_PUSHER_APP_KEY,

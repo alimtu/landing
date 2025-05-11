@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '../../../lib/hooks/useAuth.jsx';
+import { useAuth } from '../../lib/hooks/useAuth.jsx';
+import { useUser } from '../../lib/hooks/useUser';
 import { Form, Input, Button, Card, Typography, Spin, App } from 'antd';
 import { MobileOutlined, LockOutlined, NumberOutlined } from '@ant-design/icons';
+import { fetcher } from '../../lib/swr/fetcher';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
-export default function LoginPage() {
+export default function LoginFLowComponent({ onClose }) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
@@ -17,6 +19,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { requestOtp, verifyOtp, loginWithPassword } = useAuth();
+  const { setAuth, isAuthenticated, user, accessToken } = useUser();
 
   const { message } = App.useApp();
 
@@ -24,6 +27,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const response = await requestOtp(values.mobile);
+
+      console.log('responseresponse', response);
+
       setUserStatus(response);
       setMobileNumber(values.mobile);
       setStep(2);
@@ -40,8 +46,28 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (!userStatus.userPassword) {
-        await verifyOtp(mobileNumber, values.otp);
-        message.success('کد تایید با موفقیت تایید شد');
+        const result = await verifyOtp(mobileNumber, values.otp, userStatus);
+
+        if (result) {
+          await setAuth({ mobile: mobileNumber }, result.accessToken, result.refreshToken);
+
+          try {
+            const profileData = await fetcher('/v1/patients/auth/profile');
+            const userData = profileData.data;
+            setAuth(
+              {
+                ...userData,
+                mobile: mobileNumber,
+              },
+              result.accessToken,
+              result.refreshToken
+            );
+          } catch (profileError) {
+            console.error('Error fetching profile:', profileError);
+          }
+          message.success('کد تایید با موفقیت تایید شد');
+          onClose();
+        }
       } else {
         setStep(3);
       }
@@ -68,14 +94,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleChange = e => {
-    const { value: inputValue } = e.target;
-    const reg = /^-?\d*(\.\d*)?$/;
-    if (reg.test(inputValue) || inputValue === '' || inputValue === '-') {
-      onChange(inputValue);
-    }
-  };
-
   const renderStepContent = () => {
     switch (step) {
       case 1:
@@ -99,7 +117,6 @@ export default function LoginPage() {
                   max: 11,
                 }}
                 maxLength={11}
-                onChange={handleChange}
               />
             </Form.Item>
             <Form.Item>
@@ -117,7 +134,7 @@ export default function LoginPage() {
               name="otp"
               rules={[
                 { required: true, message: 'لطفا کد تایید را وارد کنید' },
-                { len: 6, message: 'کد تایید باید 6 رقم باشد' },
+                { len: 4, message: 'کد تایید باید 4 رقم باشد' },
               ]}
             >
               <Input
